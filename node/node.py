@@ -2,15 +2,12 @@ import numpy as np
 
 
 class Node:
-
     def __init__(self, left=None, right=None, mean=None, item=None, key=None):
-        self.left = left
-        self.right = right
-        n_left, n_right = [
-            getattr(child, 'n_item', 0) for child in (self.left, self.right)]
-
+        self.left, self.right = left, right
+        n_left, n_right = [getattr(child, 'n_item', 0) for child in (self.left, self.right)]
+        
         if (n_left + n_right) > 0:
-            self.mean = ((getattr(left, 'mean', 0) * n_left + getattr(right, 'mean', 0) * n_right) / (n_left + n_right))
+            self.mean = ((getattr(left, 'mean', 0) * n_left + getattr(right, 'mean', 0) * n_right)/(n_left + n_right))
             self.n_item = n_left + n_right
         elif item is not None:
             self.mean = mean

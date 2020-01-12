@@ -1,6 +1,8 @@
 import re
 from cleantext import clean
+import nltk
 from nltk.tokenize import sent_tokenize
+nltk.download('punkt')
 
 
 def convert_text_into_sentences(text):

@@ -1,0 +1,5 @@
+tqdm
+Unidecode
+nvidia-ml-py
+clean-text
+sentence-transformers
