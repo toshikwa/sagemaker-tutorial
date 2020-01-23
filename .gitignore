@@ -1,4 +1,4 @@
 .vscode/
-dataset/
 .ipynb_checkpoints/
 __pycache__/
+source_dir/modules.pickle
