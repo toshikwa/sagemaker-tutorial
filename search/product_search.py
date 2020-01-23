@@ -1,17 +1,23 @@
-import copy
 import faiss
 from itertools import chain
 import numpy as np
 import pandas as pd
-import dill
+import pickle
 from sklearn.preprocessing import normalize
 
 class ProductSearch:
     def __init__(self, reviews=None, sentences=None, embeddings=None, index_path=None):
+        """
+        Keyword Arguments:
+            reviews {pd.DataFrame} -- reviews and other information (default: {None})
+            sentences {pd.DataFrame} -- sentences with review_ids (default: {None})
+            embeddings {np.array} -- embeddings.shape = (# of data, # of embedding's dimensions) (default: {None})
+            index_path {str} -- path of pickled index (default: {None})
+        """
         if index_path is not None:
             self.load(index_path)
             return
-        assert reviews is not None, 'model_path or other data is required'
+        assert reviews is not None, 'either index_path or other data is required'
         self._reviews = reviews
         self._sentences = sentences
         # normalize for cosine distance
@@ -34,12 +40,12 @@ class ProductSearch:
     def save(self, path):
         self._index = faiss.serialize_index(self._index)
         with open(path, 'wb') as f:
-            dill.dump(self.__dict__, f)
+            pickle.dump(self.__dict__, f)
         self._index = faiss.deserialize_index(self._index)
 
     def load(self, path):
         with open(path, 'rb') as f:
-            tmp_dict = dill.load(f)
+            tmp_dict = pickle.load(f)
 
         tmp_dict['_index'] = faiss.deserialize_index(tmp_dict['_index'])
         self.__dict__.update(tmp_dict) 
@@ -55,7 +61,7 @@ if __name__ == "__main__":
     sentences = pd.read_csv(os.path.join(datasetdir, '10000_sentence.csv'))
     embeddings = np.load(os.path.join(datasetdir, '10000_embedding.npy'))
 
-    # construct model
+    # construct instance
     product_search = ProductSearch(reviews, sentences, embeddings)
 
     # example search
@@ -64,7 +70,7 @@ if __name__ == "__main__":
     pprint.pprint(search_results)
 
     print("Saving model")
-    save_path = os.path.join(src_root, 'source_dir', 'product_search.pkl')
+    save_path = os.path.join(src_root, 'source_dir', 'product_search.pickle')
     product_search.save(save_path)
 
     del product_search
