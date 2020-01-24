@@ -4,55 +4,47 @@ import argparse
 import subprocess
 import json
 import pickle
-import sagemaker_containers
 import numpy as np
 import torch
 from  torch import nn
 from sentence_transformers import SentenceTransformer
+from search import ProductSearch, convert_text_into_sentences
 
 
 def model_fn(model_dir):
-    sys.path.append(model_dir)
-    from node import node
-
     # Load trained vectorizer.
     with open(os.path.join(model_dir, 'modules.pickle'),'rb') as f:
         modules = pickle.load(f)
     vectorizer = SentenceTransformer(modules=modules).eval()
 
-    # Load trained tree.
-    with open(os.path.join(model_dir, 'tree.pkl'), 'rb') as f:
-        tree = pickle.load(f)
+    # Load trained search engine.
+    with open(os.path.join(model_dir, 'product_search.pickle'), 'rb') as f:
+        product_search = pickle.load(f)
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     return {
         'vectorizer': vectorizer.to(device),
-        'tree': tree
+        'product_search': product_search
     }
 
 
 def input_fn(input_data, content_type):
     assert content_type == 'application/json'
 
-    from node.utils import convert_text_into_sentences
-
     request = json.loads(input_data)
-    return {
-        'sentences': convert_text_into_sentences(request['query']),
-        'n_items': request['n_items']
-    }
+    return convert_text_into_sentences(request['query'])
 
 
 def predict_fn(data, model):
-    sentences, n_items = data['sentences'], data['n_items']
-    vectorizer, tree = model['vectorizer'], model['tree']
+    sentences = data
+    vectorizer, product_search = model['vectorizer'], model['product_search']
 
     # Vectorize.
     with torch.no_grad():
         embeddings = np.array(vectorizer.encode(sentences), dtype=np.float32)
 
     # Search.
-    prediction = tree.binary_search(embeddings[0], n_items)
+    search_results = product_search.search(embeddings)
     prediction = {f'pred{str(i)}': pred for i, pred in enumerate(prediction)}
 
     return prediction
@@ -63,28 +55,28 @@ def output_fn(prediction, accept):
 
 
 def train(args):
-    # Move own modules into model_dir.
-    subprocess.call(['cp', '-r', 'node', os.path.join(args.model_dir, 'node')])
-    subprocess.call(['cp', 'modules.pickle', os.path.join(args.model_dir, 'modules.pickle')])
+    # Move the pretrained model into model_dir.
+    subprocess.call([
+        'cp', 'modules.pickle',
+        os.path.join(args.model_dir, 'modules.pickle')])
 
-    # We use pretrained tree now.
-    with open(os.path.join('tree.pkl'), 'rb') as f:
-        tree = pickle.load(f)
+    # Load datasets.
+    reviews = pd.read_csv(os.path.join(args.train, '10000_review.csv'))
+    sentences = pd.read_csv(os.path.join(args.train, '10000_sentence.csv'))
+    embeddings = np.load(os.path.join(args.train, '10000_embedding.npy'))
 
-    with open(os.path.join(args.model_dir, 'tree.pkl'), 'wb') as f:
-        pickle.dump(tree, f)
+    # Construct the search engine.
+    product_search = ProductSearch(reviews, sentences, embeddings)
+
+    with open(os.path.join(args.model_dir, 'product_search.pickle'), 'wb') as f:
+        pickle.dump(product_search, f)
 
 
 if __name__ == '__main__':
-    from node import node
-
     parser = argparse.ArgumentParser()
-
-    env = sagemaker_containers.training_env()
-    parser.add_argument('--hosts', type=list, default=env.hosts)
-    parser.add_argument('--current-host', type=str, default=env.current_host)
-    parser.add_argument('--model-dir', type=str, default=env.model_dir)
-    parser.add_argument('--data-dir', type=str, default=env.channel_input_dirs.get('training'))
-    parser.add_argument('--num-gpus', type=int, default=env.num_gpus)
+    parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
+    parser.add_argument('--train', type=str, default=os.environ['SM_CHANNEL_TRAIN'])
+    parser.add_argument('--current-host', type=str, default=os.environ['SM_CURRENT_HOST'])
+    parser.add_argument('--hosts', type=list, default=json.loads(os.environ['SM_HOSTS']))
 
     train(parser.parse_args())
