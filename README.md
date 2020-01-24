@@ -9,3 +9,9 @@ python -c "import nltk; nltk.download('punkt')"
 # Download the pretrained model of Sentence-BERT.
 wget https://watanabe-storage.s3-us-west-2.amazonaws.com/dataset/modules.pickle -P source_dir
 ```
+
+## Run
+```
+# Fit and save source_dir/product_search.pickle 
+python search/product_search.py  
+```

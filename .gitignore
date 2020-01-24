@@ -2,3 +2,4 @@
 .ipynb_checkpoints/
 __pycache__/
 source_dir/modules.pickle
+source_dir/product_search.pickle

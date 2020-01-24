@@ -6,3 +6,5 @@ nvidia-ml-py
 clean-text
 nltk
 sentence-transformers
+scikit-learn
+faiss
