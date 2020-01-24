@@ -7,4 +7,5 @@ clean-text
 nltk
 sentence-transformers
 scikit-learn
-faiss
+faiss-cpu
+sagemaker
