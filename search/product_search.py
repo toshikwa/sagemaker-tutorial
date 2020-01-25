@@ -26,18 +26,23 @@ class ProductSearch:
         self._index = faiss.IndexFlatIP(embeddings.shape[1])
         self._index.add(self._embeddings)
 
-    def search(self, embedding):
+    def search(self, embedding, n_items=5):
         # normalize for cosine distance
         # TODO: search関数の返り値にsentenceを加える
         # TODO: search関数の返り値のnp.float32のものを，np.float64にキャストする(pythonではnp.float32をシリアライズできないため)
         # TODO: search関数の引数に検索結果の数を表すn_itemsも欲しい??(別になくても問題ない)
+
         normalized_embedding = np.atleast_2d(embedding)/np.linalg.norm(embedding)
         scores, indices = self._index.search(normalized_embedding, 5)
         scores, indices = scores[0], indices[0]
         review_ids = self._sentences.iloc[indices]['review_id']
-        dicts = list(chain.from_iterable([self._reviews[self._reviews['review_id'] == review_id].to_dict('records') for review_id in review_ids]))
-        for score, d in zip(scores, dicts):
-            d['product_search_score'] = score
+        dicts = list(chain.from_iterable([
+            self._reviews[self._reviews['review_id'] == review_id].to_dict('records')
+            for review_id in review_ids]))
+        for score, index, d in zip(scores, indices, dicts):
+            # Cast into np.float64 in order to serialize as the json.
+            d['product_search_score'] = score.astype(np.float64)
+            d['sentence'] = self._sentences.iloc[index].sentence
         return dicts
 
     def save(self, path):
