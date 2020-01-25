@@ -28,6 +28,9 @@ class ProductSearch:
 
     def search(self, embedding):
         # normalize for cosine distance
+        # TODO: search関数の返り値にsentenceを加える
+        # TODO: search関数の返り値のnp.float32のものを，np.float64にキャストする(pythonではnp.float32をシリアライズできないため)
+        # TODO: search関数の引数に検索結果の数を表すn_itemsも欲しい??(別になくても問題ない)
         normalized_embedding = np.atleast_2d(embedding)/np.linalg.norm(embedding)
         scores, indices = self._index.search(normalized_embedding, 5)
         scores, indices = scores[0], indices[0]
