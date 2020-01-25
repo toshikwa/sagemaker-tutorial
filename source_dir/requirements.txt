@@ -4,4 +4,4 @@ nvidia-ml-py
 clean-text
 sentence-transformers
 scikit-learn
-faiss
+faiss-cpu
