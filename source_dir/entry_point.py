@@ -15,17 +15,17 @@ from search import ProductSearch, convert_text_into_sentences
 def model_fn(model_dir):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    # Load trained vectorizer.
+    # Load the trained vectorizer.
     with open(os.path.join(model_dir, 'modules.pickle'),'rb') as f:
         modules = pickle.load(f)
-    vectorizer = SentenceTransformer(modules=modules).eval()
+    vectorizer = SentenceTransformer(modules=modules).eval().to(device)
 
-    # Load trained search engine.
+    # Load the trained search engine.
     product_search = ProductSearch(
         index_path=os.path.join(model_dir, 'product_search.pickle'))
 
     return {
-        'vectorizer': vectorizer.to(device),
+        'vectorizer': vectorizer,
         'product_search': product_search
     }
 
@@ -34,11 +34,14 @@ def input_fn(input_data, content_type):
     assert content_type == 'application/json'
 
     request = json.loads(input_data)
-    return convert_text_into_sentences(request['query'])
+    return {
+        'query': convert_text_into_sentences(request['query']),
+        'n_items': request['n_items']
+    }
 
 
 def predict_fn(data, model):
-    sentences = data
+    sentences, n_items = data['query'], data['n_items']
     vectorizer, product_search = model['vectorizer'], model['product_search']
 
     # Vectorize.
@@ -46,13 +49,9 @@ def predict_fn(data, model):
         embeddings = np.array(vectorizer.encode(sentences), dtype=np.float32)
 
     # Search.
-    prediction = product_search.search(embeddings)
+    prediction = product_search.search(embeddings, n_items=n_items)
+    # Convert list into dict.
     prediction = {f'pred{str(i)}': pred for i, pred in enumerate(prediction)}
-    
-    # Convert np.float32 into np.float64 to serialize.
-    for key in prediction.keys():
-        prediction[key]['product_search_score'] =\
-            prediction[key]['product_search_score'].astype(np.float64)
 
     return prediction
 
