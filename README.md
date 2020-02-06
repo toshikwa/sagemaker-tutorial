@@ -4,6 +4,17 @@
 
 また本記事は，AWSの3daysインターンシップで取り組んだことを題材に，インターンシップでチームを組んだ中田勇介さん([nakata_yusuke](https://twitter.com/nakata_yusuke))と一緒に作成しました．コードは[github](https://github.com/ku2482/sagemaker-tutorial)上で公開しています．
 
+実際にコードを実行する場合には，下記で実行環境をインストールする必要があります．
+
+```bash
+# Install dependencies.
+pip install -r requirements.txt
+python -c "import nltk; nltk.download('punkt')"
+
+# Download the pretrained model of Sentence-BERT.
+wget https://watanabe-storage.s3-us-west-2.amazonaws.com/dataset/modules.pickle -P source_dir
+```
+
 
 ## Amazon SageMakerとは
 
@@ -46,17 +57,6 @@ SageMakerを利用することで，以下のような課題を解決するこ�
 ## Amazon SageMakerでの学習・デプロイ
 
 ここでは，Amazon SageMaker上で機械学習モデルの学習・デプロイを行う方法を説明します．
-
-実際にコードを実行する場合には，下記で実行環境をインストールする必要があります．
-
-```bash
-# Install dependencies.
-pip install -r requirements.txt
-python -c "import nltk; nltk.download('punkt')"
-
-# Download the pretrained model of Sentence-BERT.
-wget https://watanabe-storage.s3-us-west-2.amazonaws.com/dataset/modules.pickle -P source_dir
-```
 
 Amazon SageMakerでは，環境構築や学習・推論の実行にDockerコンテナを利用します．本記事では，Amazon SageMakerが提供するデフォルトのコンテナ([参考](https://github.com/aws/sagemaker-containers))を扱い，独自のコンテナを利用する方法については触れません．
 
