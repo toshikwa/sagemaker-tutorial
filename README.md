@@ -20,7 +20,7 @@ wget https://watanabe-storage.s3-us-west-2.amazonaws.com/dataset/modules.pickle 
 
 [Amazon SageMaker](https://aws.amazon.com/jp/sagemaker/)とは，**機械学習モデルを高速に開発・学習・デプロイするためのマネージドサービス**です．よく利用されるEC2は，主にインフラ(やフレームワーク等)を提供するためのサービスなので，EC2の1つ上のレイヤのサービスとなります．
 
-SageMakerを利用することで，以下のような課題を解決することができます．
+SageMakerを利用することで，以下のような作業を簡単に行うことができます．
 
 - 開発・学習環境の用意や環境構築
 - 実験結果の管理
