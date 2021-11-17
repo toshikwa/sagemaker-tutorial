@@ -7,9 +7,8 @@ import subprocess
 import numpy as np
 import pandas as pd
 import torch
-from sentence_transformers import SentenceTransformer
-
 from search import ProductSearch, convert_text_into_sentences
+from sentence_transformers import SentenceTransformer
 
 
 def model_fn(model_dir):
@@ -49,8 +48,9 @@ def predict_fn(data, model):
     return prediction
 
 
-def output_fn(prediction, accept):
-    return json.dumps(prediction), accept
+def output_fn(prediction, content_type):
+    assert content_type == "application/json"
+    return json.dumps(prediction)
 
 
 def train(args):
