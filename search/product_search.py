@@ -1,9 +1,11 @@
-import faiss
+import pickle
 from itertools import chain
+
+import faiss
 import numpy as np
 import pandas as pd
-import pickle
 from sklearn.preprocessing import normalize
+
 
 class ProductSearch:
     def __init__(self, reviews=None, sentences=None, embeddings=None, index_path=None):
@@ -17,7 +19,7 @@ class ProductSearch:
         if index_path is not None:
             self.load(index_path)
             return
-        assert reviews is not None, 'either index_path or other data is required'
+        assert reviews is not None, "either index_path or other data is required"
         self._reviews = reviews
         self._sentences = sentences
         # normalize for cosine distance
@@ -31,39 +33,42 @@ class ProductSearch:
         normalized_embedding = np.atleast_2d(embedding) / np.linalg.norm(embedding)
         scores, indices = self._index.search(normalized_embedding, n_items)
         scores, indices = scores[0], indices[0]
-        review_ids = self._sentences.iloc[indices]['review_id']
-        dicts = list(chain.from_iterable([
-            self._reviews[self._reviews['review_id'] == review_id].to_dict('records')
-            for review_id in review_ids]))
+        review_ids = self._sentences.iloc[indices]["review_id"]
+        dicts = list(
+            chain.from_iterable(
+                [self._reviews[self._reviews["review_id"] == review_id].to_dict("records") for review_id in review_ids]
+            )
+        )
         for score, index, d in zip(scores, indices, dicts):
             # Cast into np.float64 in order to serialize as the json.
-            d['product_search_score'] = score.astype(np.float64)
-            d['sentence'] = self._sentences.iloc[index].sentence
+            d["product_search_score"] = score.astype(np.float64)
+            d["sentence"] = self._sentences.iloc[index].sentence
         return dicts
 
     def save(self, path):
         self._index = faiss.serialize_index(self._index)
-        with open(path, 'wb') as f:
+        with open(path, "wb") as f:
             pickle.dump(self.__dict__, f)
         self._index = faiss.deserialize_index(self._index)
 
     def load(self, path):
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             tmp_dict = pickle.load(f)
 
-        tmp_dict['_index'] = faiss.deserialize_index(tmp_dict['_index'])
-        self.__dict__.update(tmp_dict) 
+        tmp_dict["_index"] = faiss.deserialize_index(tmp_dict["_index"])
+        self.__dict__.update(tmp_dict)
 
 
 if __name__ == "__main__":
     import os
     import pprint
+
     # prepare dataset
     src_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    datasetdir = os.path.join(src_root, 'dataset')
-    reviews = pd.read_csv(os.path.join(datasetdir, '10000_review.csv'))
-    sentences = pd.read_csv(os.path.join(datasetdir, '10000_sentence.csv'))
-    embeddings = np.load(os.path.join(datasetdir, '10000_embedding.npy'))
+    datasetdir = os.path.join(src_root, "dataset")
+    reviews = pd.read_csv(os.path.join(datasetdir, "10000_review.csv"))
+    sentences = pd.read_csv(os.path.join(datasetdir, "10000_sentence.csv"))
+    embeddings = np.load(os.path.join(datasetdir, "10000_embedding.npy"))
 
     # construct instance
     product_search = ProductSearch(reviews, sentences, embeddings)
@@ -74,7 +79,7 @@ if __name__ == "__main__":
     pprint.pprint(search_results)
 
     print("Saving model")
-    save_path = os.path.join(src_root, 'source_dir', 'product_search.pickle')
+    save_path = os.path.join(src_root, "source_dir", "product_search.pickle")
     product_search.save(save_path)
 
     del product_search

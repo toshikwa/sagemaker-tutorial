@@ -1,8 +1,10 @@
 import re
-from cleantext import clean
+
 import nltk
+from cleantext import clean
 from nltk.tokenize import sent_tokenize
-nltk.download('punkt')
+
+nltk.download("punkt")
 
 
 def convert_text_into_sentences(text):
@@ -21,12 +23,13 @@ def convert_text_into_sentences(text):
         no_numbers=False,
         no_digits=False,
         no_currency_symbols=False,
-        no_punct=False)
+        no_punct=False,
+    )
 
     # Remove tags.
-    text = re.sub('<[^<]+?>', '', text)
+    text = re.sub("<[^<]+?>", "", text)
     # Remove invalid charactors.
-    text = re.sub('[#%\'\(\)\*\+\-\\\/:;<=>@^_`|~\[\]]+', '', text)
+    text = re.sub("[#%'\(\)\*\+\-\\\/:;<=>@^_`|~\[\]]+", "", text)
     # Convert a text into sentences.
     sentences = sent_tokenize(text)
 
