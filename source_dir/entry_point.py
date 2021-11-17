@@ -1,6 +1,8 @@
 import argparse
 import json
 import os
+import pickle
+import subprocess
 
 import numpy as np
 import pandas as pd
@@ -14,7 +16,9 @@ def model_fn(model_dir):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load the trained vectorizer.
-    vectorizer = SentenceTransformer("all-MiniLM-L6-v2").eval().to(device)
+    with open(os.path.join(model_dir, "modules.pickle"), "rb") as f:
+        modules = pickle.load(f)
+    vectorizer = SentenceTransformer(modules=modules).eval().to(device)
 
     # Load the trained search engine.
     product_search = ProductSearch(index_path=os.path.join(model_dir, "product_search.pickle"))
@@ -50,6 +54,9 @@ def output_fn(prediction, accept):
 
 
 def train(args):
+    # Move the pretrained model into model_dir.
+    subprocess.call(["cp", "modules.pickle", os.path.join(args.model_dir, "modules.pickle")])
+
     # Load datasets.
     reviews = pd.read_csv(os.path.join(args.train, "10000_review.csv"))
     sentences = pd.read_csv(os.path.join(args.train, "10000_sentence.csv"))
