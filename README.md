@@ -8,9 +8,6 @@ This is an Amazon SageMaker tutorial for easily training and deploying ML models
 # Install dependencies.
 pip install -r requirements.txt
 python -c "import nltk; nltk.download('punkt')"
-
-# Download the pretrained model of Sentence-BERT.
-wget https://watanabe-storage.s3-us-west-2.amazonaws.com/dataset/modules.pickle -P source_dir
 ```
 
 ## Usage
