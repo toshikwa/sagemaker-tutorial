@@ -8,4 +8,4 @@ nltk==3.6.5
 sentence-transformers==0.2.4.1
 scikit-learn==1.0.1
 faiss-cpu==1.6.1
-sagemaker==2.69.0
+sagemaker==2.218.0
